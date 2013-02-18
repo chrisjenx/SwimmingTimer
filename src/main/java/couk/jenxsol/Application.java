@@ -46,11 +46,22 @@ public class Application implements ActionListener, KeyEventDispatcher
         return textTimer;
     }
 
+    private static JLabel createTextLabel()
+    {
+        final JLabel textLabel = new JLabel();
+        textLabel.setFocusable(false);
+        textLabel.setForeground(Colours.FONT_DARK_GREY);
+        textLabel.setOpaque(true);
+        textLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        return textLabel;
+    }
+
     private final StopWatch.OnLaneUpdatedListener mListener = new StopWatch.OnLaneUpdatedListener()
     {
         @Override
         public void onLaneTimeStarted(final Lane lane, final int position)
         {
+            setTextStatusFromPos(position, STATUS.RUNNING);
         }
 
         @Override
@@ -63,6 +74,7 @@ public class Application implements ActionListener, KeyEventDispatcher
         public void onLaneFinished(final Lane lane, final int position, final long finishedTime)
         {
             setTextTimersFromPos(position, finishedTime);
+            setTextStatusFromPos(position, STATUS.STOPPED);
         }
     };
     private final StopWatch.OnStopWatchListener mStopWatchListener = new StopWatch.OnStopWatchListener()
@@ -117,6 +129,7 @@ public class Application implements ActionListener, KeyEventDispatcher
         mStartStopButton.addActionListener(this);
         mResetButton.addActionListener(this);
         buttonStates();
+        resetTextTimers();
     }
 
     private void buttonStates()
@@ -132,7 +145,9 @@ public class Application implements ActionListener, KeyEventDispatcher
             mResetButton.setEnabled(true);
         }
         else
+        {
             mStartStopButton.setEnabled(true);
+        }
     }
 
     @Override
@@ -208,23 +223,113 @@ public class Application implements ActionListener, KeyEventDispatcher
         }
     }
 
+    private void setTextStatusFromPos(final int pos, final STATUS status)
+    {
+        final JLabel label;
+        switch (pos)
+        {
+            case 0:
+                label = mStatusTimer1;
+                break;
+            case 1:
+                label = mStatusTimer2;
+                break;
+            case 2:
+                label = mStatusTimer3;
+                break;
+            case 3:
+                label = mStatusTimer4;
+                break;
+            case 4:
+                label = mStatusTimer5;
+                break;
+            case 5:
+                label = mStatusTimer6;
+                break;
+            case 6:
+                label = mStatusTimer7;
+                break;
+            case 7:
+                label = mStatusTimer8;
+                break;
+            case 8:
+                label = mStatusTimer9;
+                break;
+            case 9:
+                label = mStatusTimer10;
+                break;
+            default:
+                label = null;
+                break;
+        }
+        if (label != null)
+        {
+            setTextStatusTime(label, status);
+        }
+
+    }
+
     private void resetTextTimers()
     {
         setTextTimerTime(mTextTimer1, 0);
+        setTextStatusTime(mStatusTimer1, STATUS.WAITING);
         setTextTimerTime(mTextTimer2, 0);
+        setTextStatusTime(mStatusTimer2, STATUS.WAITING);
         setTextTimerTime(mTextTimer3, 0);
+        setTextStatusTime(mStatusTimer3, STATUS.WAITING);
         setTextTimerTime(mTextTimer4, 0);
+        setTextStatusTime(mStatusTimer4, STATUS.WAITING);
         setTextTimerTime(mTextTimer5, 0);
+        setTextStatusTime(mStatusTimer5, STATUS.WAITING);
         setTextTimerTime(mTextTimer6, 0);
+        setTextStatusTime(mStatusTimer6, STATUS.WAITING);
         setTextTimerTime(mTextTimer7, 0);
+        setTextStatusTime(mStatusTimer7, STATUS.WAITING);
         setTextTimerTime(mTextTimer8, 0);
+        setTextStatusTime(mStatusTimer8, STATUS.WAITING);
         setTextTimerTime(mTextTimer9, 0);
+        setTextStatusTime(mStatusTimer9, STATUS.WAITING);
         setTextTimerTime(mTextTimer10, 0);
+        setTextStatusTime(mStatusTimer10, STATUS.WAITING);
+    }
+
+    private void setTextStatusTime(final JLabel label, STATUS status)
+    {
+        switch (status)
+        {
+            case STOPPED:
+                label.setText("Finished");
+                label.setBackground(Colours.WHITISH);
+                break;
+            case RUNNING:
+                label.setText("Swimming");
+                label.setBackground(Color.ORANGE);
+                break;
+            case WAITING:
+                label.setText("Ready");
+                label.setBackground(Colours.WHITISH);
+                break;
+            case FIRST:
+                label.setText("First");
+                label.setBackground(Colours.GREEN_DARK);
+                break;
+            case SECOND:
+                label.setText("Second");
+                label.setBackground(Colours.GREEN_MID);
+                break;
+            case THIRD:
+                label.setText("Third");
+                label.setBackground(Colours.GREEN_LIGHT);
+                break;
+        }
     }
 
     private void setTextTimerTime(final JTextField textTimer, final long time)
     {
-        textTimer.setText(String.valueOf(time));
+        int minutes = (int) ((time / (1000 * 60)) % 60);
+        int seconds = (int) (time / 1000) % 60;
+        int millis = (int) time % 1000;
+        textTimer.setText(String.format("%d:%02d:%03d", minutes, seconds, millis));
     }
 
     @Override
@@ -301,6 +406,17 @@ public class Application implements ActionListener, KeyEventDispatcher
         mTextTimer8 = createTextField();
         mTextTimer9 = createTextField();
         mTextTimer10 = createTextField();
+
+        mStatusTimer1 = createTextLabel();
+        mStatusTimer2 = createTextLabel();
+        mStatusTimer3 = createTextLabel();
+        mStatusTimer4 = createTextLabel();
+        mStatusTimer5 = createTextLabel();
+        mStatusTimer6 = createTextLabel();
+        mStatusTimer7 = createTextLabel();
+        mStatusTimer8 = createTextLabel();
+        mStatusTimer9 = createTextLabel();
+        mStatusTimer10 = createTextLabel();
     }
 
     /**
@@ -314,14 +430,14 @@ public class Application implements ActionListener, KeyEventDispatcher
     {
         createUIComponents();
         mMainPanel = new JPanel();
-        mMainPanel.setLayout(new FormLayout("fill:m:grow,center:4dlu:noGrow,fill:max(m;192px):noGrow", "center:20dlu:noGrow,top:4dlu:noGrow,center:d:grow"));
+        mMainPanel.setLayout(new FormLayout("fill:m:grow,center:4dlu:noGrow,fill:max(m;192px):noGrow,left:4dlu:noGrow,fill:4dlu:noGrow", "center:20dlu:noGrow,top:4dlu:noGrow,center:358px:grow,top:4dlu:noGrow,center:4dlu:noGrow"));
         mMainPanel.setFocusable(false);
         mMainPanel.setMinimumSize(new Dimension(620, 410));
         mMainPanel.setOpaque(true);
         mMainPanel.setPreferredSize(new Dimension(600, 410));
         mMainPanel.setRequestFocusEnabled(true);
         final JPanel panel1 = new JPanel();
-        panel1.setLayout(new FormLayout("fill:6dlu:noGrow,left:4dlu:noGrow,fill:max(d;12dlu):noGrow,left:8dlu:noGrow,fill:d:grow,left:8dlu:noGrow,fill:max(d;4px):noGrow,left:4dlu:noGrow,fill:8dlu:noGrow", "center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow"));
+        panel1.setLayout(new FormLayout("fill:6dlu:noGrow,left:4dlu:noGrow,fill:max(d;12dlu):noGrow,left:8dlu:noGrow,fill:d:grow,left:8dlu:noGrow,fill:max(m;42dlu):noGrow,left:4dlu:noGrow,fill:8dlu:noGrow", "center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow"));
         CellConstraints cc = new CellConstraints();
         mMainPanel.add(panel1, cc.xy(1, 3, CellConstraints.DEFAULT, CellConstraints.CENTER));
         mTextTimer1.setEditable(false);
@@ -344,34 +460,25 @@ public class Application implements ActionListener, KeyEventDispatcher
         panel1.add(mTextTimer9, cc.xy(5, 17, CellConstraints.FILL, CellConstraints.DEFAULT));
         mTextTimer10.setEditable(false);
         panel1.add(mTextTimer10, cc.xy(5, 19, CellConstraints.FILL, CellConstraints.DEFAULT));
-        mStatusTimer1 = new JLabel();
-        mStatusTimer1.setText("Status");
+        mStatusTimer1.setHorizontalAlignment(0);
+        mStatusTimer1.setText("Swimming");
         panel1.add(mStatusTimer1, cc.xy(7, 1, CellConstraints.FILL, CellConstraints.FILL));
-        mStatusTimer2 = new JLabel();
         mStatusTimer2.setText("Status");
         panel1.add(mStatusTimer2, cc.xy(7, 3, CellConstraints.FILL, CellConstraints.FILL));
-        mStatusTimer3 = new JLabel();
         mStatusTimer3.setText("Status");
         panel1.add(mStatusTimer3, cc.xy(7, 5, CellConstraints.FILL, CellConstraints.FILL));
-        mStatusTimer4 = new JLabel();
         mStatusTimer4.setText("Status");
         panel1.add(mStatusTimer4, cc.xy(7, 7, CellConstraints.FILL, CellConstraints.FILL));
-        mStatusTimer5 = new JLabel();
         mStatusTimer5.setText("Status");
         panel1.add(mStatusTimer5, cc.xy(7, 9, CellConstraints.FILL, CellConstraints.FILL));
-        mStatusTimer6 = new JLabel();
         mStatusTimer6.setText("Status");
         panel1.add(mStatusTimer6, cc.xy(7, 11, CellConstraints.FILL, CellConstraints.FILL));
-        mStatusTimer7 = new JLabel();
         mStatusTimer7.setText("Status");
         panel1.add(mStatusTimer7, cc.xy(7, 13, CellConstraints.FILL, CellConstraints.FILL));
-        mStatusTimer8 = new JLabel();
         mStatusTimer8.setText("Status");
         panel1.add(mStatusTimer8, cc.xy(7, 15, CellConstraints.FILL, CellConstraints.FILL));
-        mStatusTimer9 = new JLabel();
         mStatusTimer9.setText("Status");
         panel1.add(mStatusTimer9, cc.xy(7, 17, CellConstraints.FILL, CellConstraints.FILL));
-        mStatusTimer10 = new JLabel();
         mStatusTimer10.setText("Status");
         panel1.add(mStatusTimer10, cc.xy(7, 19, CellConstraints.FILL, CellConstraints.FILL));
         final JLabel label1 = new JLabel();
@@ -454,5 +561,15 @@ public class Application implements ActionListener, KeyEventDispatcher
     public JComponent $$$getRootComponent$$$()
     {
         return mMainPanel;
+    }
+
+    private enum STATUS
+    {
+        WAITING,
+        STOPPED,
+        RUNNING,
+        FIRST,
+        SECOND,
+        THIRD;
     }
 }

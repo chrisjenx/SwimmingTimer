@@ -3,10 +3,14 @@
   <grid id="27dc6" binding="mMainPanel" layout-manager="FormLayout">
     <rowspec value="center:20dlu:noGrow"/>
     <rowspec value="top:4dlu:noGrow"/>
-    <rowspec value="center:d:grow"/>
+    <rowspec value="center:358px:grow"/>
+    <rowspec value="top:4dlu:noGrow"/>
+    <rowspec value="center:4dlu:noGrow"/>
     <colspec value="fill:m:grow"/>
     <colspec value="center:4dlu:noGrow"/>
     <colspec value="fill:max(m;192px):noGrow"/>
+    <colspec value="left:4dlu:noGrow"/>
+    <colspec value="fill:4dlu:noGrow"/>
     <constraints>
       <xy x="20" y="20" width="620" height="410"/>
     </constraints>
@@ -45,7 +49,7 @@
         <colspec value="left:8dlu:noGrow"/>
         <colspec value="fill:d:grow"/>
         <colspec value="left:8dlu:noGrow"/>
-        <colspec value="fill:max(d;4px):noGrow"/>
+        <colspec value="fill:max(m;42dlu):noGrow"/>
         <colspec value="left:4dlu:noGrow"/>
         <colspec value="fill:8dlu:noGrow"/>
         <constraints>
@@ -165,16 +169,17 @@
               <editable value="false"/>
             </properties>
           </component>
-          <component id="7290a" class="javax.swing.JLabel" binding="mStatusTimer1">
+          <component id="7290a" class="javax.swing.JLabel" binding="mStatusTimer1" custom-create="true">
             <constraints>
               <grid row="0" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <forms defaultalign-horz="false" defaultalign-vert="false"/>
             </constraints>
             <properties>
-              <text value="Status"/>
+              <horizontalAlignment value="0"/>
+              <text value="Swimming"/>
             </properties>
           </component>
-          <component id="e78fb" class="javax.swing.JLabel" binding="mStatusTimer2">
+          <component id="e78fb" class="javax.swing.JLabel" binding="mStatusTimer2" custom-create="true">
             <constraints>
               <grid row="2" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <forms defaultalign-horz="false" defaultalign-vert="false"/>
@@ -183,7 +188,7 @@
               <text value="Status"/>
             </properties>
           </component>
-          <component id="253b2" class="javax.swing.JLabel" binding="mStatusTimer3">
+          <component id="253b2" class="javax.swing.JLabel" binding="mStatusTimer3" custom-create="true">
             <constraints>
               <grid row="4" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <forms defaultalign-horz="false" defaultalign-vert="false"/>
@@ -192,7 +197,7 @@
               <text value="Status"/>
             </properties>
           </component>
-          <component id="2f01" class="javax.swing.JLabel" binding="mStatusTimer4">
+          <component id="2f01" class="javax.swing.JLabel" binding="mStatusTimer4" custom-create="true">
             <constraints>
               <grid row="6" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <forms defaultalign-horz="false" defaultalign-vert="false"/>
@@ -201,7 +206,7 @@
               <text value="Status"/>
             </properties>
           </component>
-          <component id="ac741" class="javax.swing.JLabel" binding="mStatusTimer5">
+          <component id="ac741" class="javax.swing.JLabel" binding="mStatusTimer5" custom-create="true">
             <constraints>
               <grid row="8" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <forms defaultalign-horz="false" defaultalign-vert="false"/>
@@ -210,7 +215,7 @@
               <text value="Status"/>
             </properties>
           </component>
-          <component id="f2734" class="javax.swing.JLabel" binding="mStatusTimer6">
+          <component id="f2734" class="javax.swing.JLabel" binding="mStatusTimer6" custom-create="true">
             <constraints>
               <grid row="10" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <forms defaultalign-horz="false" defaultalign-vert="false"/>
@@ -219,7 +224,7 @@
               <text value="Status"/>
             </properties>
           </component>
-          <component id="82688" class="javax.swing.JLabel" binding="mStatusTimer7">
+          <component id="82688" class="javax.swing.JLabel" binding="mStatusTimer7" custom-create="true">
             <constraints>
               <grid row="12" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <forms defaultalign-horz="false" defaultalign-vert="false"/>
@@ -228,7 +233,7 @@
               <text value="Status"/>
             </properties>
           </component>
-          <component id="6051a" class="javax.swing.JLabel" binding="mStatusTimer8">
+          <component id="6051a" class="javax.swing.JLabel" binding="mStatusTimer8" custom-create="true">
             <constraints>
               <grid row="14" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <forms defaultalign-horz="false" defaultalign-vert="false"/>
@@ -237,7 +242,7 @@
               <text value="Status"/>
             </properties>
           </component>
-          <component id="35837" class="javax.swing.JLabel" binding="mStatusTimer9">
+          <component id="35837" class="javax.swing.JLabel" binding="mStatusTimer9" custom-create="true">
             <constraints>
               <grid row="16" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <forms defaultalign-horz="false" defaultalign-vert="false"/>
@@ -246,7 +251,7 @@
               <text value="Status"/>
             </properties>
           </component>
-          <component id="c9399" class="javax.swing.JLabel" binding="mStatusTimer10">
+          <component id="c9399" class="javax.swing.JLabel" binding="mStatusTimer10" custom-create="true">
             <constraints>
               <grid row="18" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
               <forms defaultalign-horz="false" defaultalign-vert="false"/>
