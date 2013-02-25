@@ -79,7 +79,7 @@ public class StopWatch extends Thread
             if (!isAlive() || !run) throw new IllegalStateException("StopWatch wasn't running!");
             run = false;
             stopLanes(System.currentTimeMillis());
-            return true;
+            return stopped = true;
         }
     }
 
@@ -98,6 +98,7 @@ public class StopWatch extends Thread
 
             long finishTime = mLanes[position].stop(when);
             fireLaneFinished(mLanes[position], position, finishTime);
+            if(!checkStillRunning()) finish();
             return finishTime;
         }
     }
@@ -105,7 +106,7 @@ public class StopWatch extends Thread
     @Override
     public void run()
     {
-        if(mStopWatchListener != null) mStopWatchListener.onStopWatchStart();
+        if (mStopWatchListener != null) mStopWatchListener.onStopWatchStart();
         sleep();
         while (run)
         {
@@ -113,7 +114,7 @@ public class StopWatch extends Thread
             sleep();
         }
         stopped = true;
-        if(mStopWatchListener != null) mStopWatchListener.onStopWatchStop();
+        if (mStopWatchListener != null) mStopWatchListener.onStopWatchStop();
     }
 
     /**
@@ -145,6 +146,31 @@ public class StopWatch extends Thread
         }
     }
 
+    public int runningCount()
+    {
+        synchronized (sync)
+        {
+            if (mLanes == null) return 0;
+            int count = 0;
+            for (Lane lane : mLanes)
+            {
+                if (!lane.isStopped()) count++;
+            }
+            return count;
+        }
+    }
+
+    /**
+     * Call after stopping a timer(s)
+     */
+    private boolean checkStillRunning()
+    {
+        if (isAlive() && runningCount() > 0)
+            return true;
+
+        return false;
+    }
+
     /**
      * Caught sleep method
      */
@@ -167,7 +193,7 @@ public class StopWatch extends Thread
             if (!mLanes[i].isStopped())
             {
                 currTime = mLanes[i].stop(finishTime);
-                fireLaneTimeUpdated(mLanes[i], i, currTime);
+                fireLaneFinished(mLanes[i], i, currTime);
             }
         }
     }
@@ -224,7 +250,8 @@ public class StopWatch extends Thread
 
     }
 
-    public static interface OnStopWatchListener{
+    public static interface OnStopWatchListener
+    {
 
         public void onStopWatchStart();
 

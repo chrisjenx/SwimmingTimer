@@ -6,12 +6,19 @@ import couk.jenxsol.timing.Lane;
 import couk.jenxsol.timing.StopWatch;
 import couk.jenxsol.timing.Timer;
 import couk.jenxsol.utils.Colours;
+import couk.jenxsol.utils.Export;
+import couk.jenxsol.utils.Log;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Created with Intellij with Android, BIZZBY product.
@@ -24,10 +31,14 @@ import java.awt.event.KeyEvent;
 public class Application implements ActionListener, KeyEventDispatcher
 {
     public static final String DEFAULT_TEXT = "0:00:000";
+    public static final String SHEET = "RawResults";
 
     public static void main(final String[] args)
     {
-        JFrame frame = new JFrame("Application");
+        // set the name of the application menu item
+        System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Swimming Gala Timer");
+
+        JFrame frame = new JFrame("Swimming Gala Timer");
         frame.setContentPane(new Application().mMainPanel);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
@@ -73,6 +84,7 @@ public class Application implements ActionListener, KeyEventDispatcher
         @Override
         public void onLaneFinished(final Lane lane, final int position, final long finishedTime)
         {
+            Log.d("Lane [" + position + "] Finished");
             setTextTimersFromPos(position, finishedTime);
             setTextStatusFromPos(position, STATUS.STOPPED);
         }
@@ -82,12 +94,14 @@ public class Application implements ActionListener, KeyEventDispatcher
         @Override
         public void onStopWatchStart()
         {
+
             buttonStates();
         }
 
         @Override
         public void onStopWatchStop()
         {
+            Log.d("Stop watch stopped");
             buttonStates();
         }
     };
@@ -111,6 +125,8 @@ public class Application implements ActionListener, KeyEventDispatcher
     private JTextField mTextTimer10;
     private JButton mStartStopButton;
     private JButton mResetButton;
+    private JButton mExportCurrentResultsButton;
+    private JButton mChooseButton;
     private JLabel mStatusTimer1;
     private JLabel mStatusTimer3;
     private JLabel mStatusTimer2;
@@ -121,6 +137,17 @@ public class Application implements ActionListener, KeyEventDispatcher
     private JLabel mStatusTimer8;
     private JLabel mStatusTimer9;
     private JLabel mStatusTimer10;
+    private JTextField mTextTimerMills1;
+    private JTextField mTextTimerMills2;
+    private JTextField mTextTimerMills3;
+    private JTextField mTextTimerMills4;
+    private JTextField mTextTimerMills5;
+    private JTextField mTextTimerMills6;
+    private JTextField mTextTimerMills7;
+    private JTextField mTextTimerMills8;
+    private JTextField mTextTimerMills9;
+    private JTextField mTextTimerMills10;
+    private File mFile;
 
     public Application()
     {
@@ -128,6 +155,8 @@ public class Application implements ActionListener, KeyEventDispatcher
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
         mStartStopButton.addActionListener(this);
         mResetButton.addActionListener(this);
+        mExportCurrentResultsButton.addActionListener(this);
+        mChooseButton.addActionListener(this);
         buttonStates();
         resetTextTimers();
     }
@@ -135,6 +164,7 @@ public class Application implements ActionListener, KeyEventDispatcher
     private void buttonStates()
     {
         mResetButton.setEnabled(false);
+        mExportCurrentResultsButton.setEnabled(false);
         if (mTimer.isRunning())
             mStartStopButton.setText("STOP");
         else
@@ -143,6 +173,10 @@ public class Application implements ActionListener, KeyEventDispatcher
         {
             mStartStopButton.setEnabled(false);
             mResetButton.setEnabled(true);
+            if (mFile != null && mFile.exists() && mFile.isFile())
+            {
+                mExportCurrentResultsButton.setEnabled(true);
+            }
         }
         else
         {
@@ -176,9 +210,95 @@ public class Application implements ActionListener, KeyEventDispatcher
             resetTextTimers();
             buttonStates();
         }
+        if (item.equals(mChooseButton))
+        {
+            final File file = Export.startFileChooser(mMainPanel, mFile);
+            if (file != null)
+            {
+                mFile = file;
+                mChooseButton.setText(mFile.getName());
+                buttonStates();
+            }
+        }
+        if (item.equals(mExportCurrentResultsButton) && mFile != null)
+        {
+            exportCurrentResults();
+            mExportCurrentResultsButton.setEnabled(false);
+        }
+    }
+
+    private void exportCurrentResults()
+    {
+        if (mFile == null) return;
+        WritableWorkbook workbook = Export.getWorkBook(mFile);
+        if (workbook == null)
+        {
+            //TODO Error
+        }
+        WritableSheet sheet = Export.getExportSheet(workbook, SHEET);
+        if (sheet == null)
+        {
+            //TODO error
+        }
+        int newCol = Export.nextFreeColNumber(sheet);
+        String time;
+        for (int i = 0; i < 10; i++)
+        {
+            time = getTimerValue(i);
+            Export.writeToCell(sheet, getTimerMillsValue(i), newCol, i);
+            Log.d("Wrote time [" + time + "] to row [" + i + "]");
+        }
+        try
+        {
+            workbook.write();
+            workbook.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        catch (WriteException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    private String getTimerValue(int pos)
+    {
+        final JTextField field = getTextTimerForPos(pos);
+        if (field != null)
+        {
+            return field.getText();
+        }
+        return null;
+    }
+
+    private String getTimerMillsValue(int pos)
+    {
+        final JTextField field = getTextTimerMillsForPos(pos);
+        if (field != null)
+        {
+            return field.getText();
+        }
+        return null;
     }
 
     private void setTextTimersFromPos(int pos, long when)
+    {
+        final JTextField field = getTextTimerForPos(pos);
+        final JTextField field1 = getTextTimerMillsForPos(pos);
+
+        if (field != null)
+        {
+            setTextTimerTime(field, when);
+        }
+        if (field1 != null)
+        {
+            field1.setText(String.valueOf(when));
+        }
+    }
+
+    private JTextField getTextTimerForPos(int pos)
     {
         final JTextField field;
         switch (pos)
@@ -217,10 +337,50 @@ public class Application implements ActionListener, KeyEventDispatcher
                 field = null;
                 break;
         }
-        if (field != null)
+        return field;
+
+    }
+
+    private JTextField getTextTimerMillsForPos(int pos)
+    {
+        final JTextField field;
+        switch (pos)
         {
-            setTextTimerTime(field, when);
+            case 0:
+                field = mTextTimerMills1;
+                break;
+            case 1:
+                field = mTextTimerMills2;
+                break;
+            case 2:
+                field = mTextTimerMills3;
+                break;
+            case 3:
+                field = mTextTimerMills4;
+                break;
+            case 4:
+                field = mTextTimerMills5;
+                break;
+            case 5:
+                field = mTextTimerMills6;
+                break;
+            case 6:
+                field = mTextTimerMills7;
+                break;
+            case 7:
+                field = mTextTimerMills8;
+                break;
+            case 8:
+                field = mTextTimerMills9;
+                break;
+            case 9:
+                field = mTextTimerMills10;
+                break;
+            default:
+                field = null;
+                break;
         }
+        return field;
     }
 
     private void setTextStatusFromPos(final int pos, final STATUS status)
@@ -291,6 +451,17 @@ public class Application implements ActionListener, KeyEventDispatcher
         setTextStatusTime(mStatusTimer9, STATUS.WAITING);
         setTextTimerTime(mTextTimer10, 0);
         setTextStatusTime(mStatusTimer10, STATUS.WAITING);
+        getTextTimerMillsForPos(0).setText("");
+        getTextTimerMillsForPos(1).setText("");
+        getTextTimerMillsForPos(2).setText("");
+        getTextTimerMillsForPos(3).setText("");
+        getTextTimerMillsForPos(4).setText("");
+        getTextTimerMillsForPos(5).setText("");
+        getTextTimerMillsForPos(6).setText("");
+        getTextTimerMillsForPos(7).setText("");
+        getTextTimerMillsForPos(8).setText("");
+        getTextTimerMillsForPos(9).setText("");
+
     }
 
     private void setTextStatusTime(final JLabel label, STATUS status)
@@ -407,6 +578,17 @@ public class Application implements ActionListener, KeyEventDispatcher
         mTextTimer9 = createTextField();
         mTextTimer10 = createTextField();
 
+        mTextTimerMills1 = createTextField();
+        mTextTimerMills2 = createTextField();
+        mTextTimerMills3 = createTextField();
+        mTextTimerMills4 = createTextField();
+        mTextTimerMills5 = createTextField();
+        mTextTimerMills6 = createTextField();
+        mTextTimerMills7 = createTextField();
+        mTextTimerMills8 = createTextField();
+        mTextTimerMills9 = createTextField();
+        mTextTimerMills10 = createTextField();
+
         mStatusTimer1 = createTextLabel();
         mStatusTimer2 = createTextLabel();
         mStatusTimer3 = createTextLabel();
@@ -430,36 +612,36 @@ public class Application implements ActionListener, KeyEventDispatcher
     {
         createUIComponents();
         mMainPanel = new JPanel();
-        mMainPanel.setLayout(new FormLayout("fill:m:grow,center:4dlu:noGrow,fill:max(m;192px):noGrow,left:4dlu:noGrow,fill:4dlu:noGrow", "center:20dlu:noGrow,top:4dlu:noGrow,center:358px:grow,top:4dlu:noGrow,center:4dlu:noGrow"));
+        mMainPanel.setLayout(new FormLayout("fill:max(d;4px):noGrow,left:4dlu:noGrow,fill:m:grow,center:4dlu:noGrow,fill:max(m;192px):noGrow,left:4dlu:noGrow,fill:4dlu:noGrow", "center:358px:grow(0.9),top:3dlu:noGrow,center:max(d;20dlu):grow,top:4dlu:noGrow,center:4dlu:noGrow"));
         mMainPanel.setFocusable(false);
         mMainPanel.setMinimumSize(new Dimension(620, 410));
         mMainPanel.setOpaque(true);
         mMainPanel.setPreferredSize(new Dimension(600, 410));
         mMainPanel.setRequestFocusEnabled(true);
         final JPanel panel1 = new JPanel();
-        panel1.setLayout(new FormLayout("fill:6dlu:noGrow,left:4dlu:noGrow,fill:max(d;12dlu):noGrow,left:8dlu:noGrow,fill:d:grow,left:8dlu:noGrow,fill:max(m;42dlu):noGrow,left:4dlu:noGrow,fill:8dlu:noGrow", "center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow"));
+        panel1.setLayout(new FormLayout("fill:max(d;12dlu):noGrow,left:8dlu:noGrow,fill:d:grow(0.6),left:4dlu:noGrow,fill:d:grow(0.4),left:8dlu:noGrow,fill:max(m;42dlu):noGrow,left:4dlu:noGrow,fill:8dlu:noGrow", "center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow,top:3dlu:noGrow,center:max(d;4px):noGrow"));
         CellConstraints cc = new CellConstraints();
-        mMainPanel.add(panel1, cc.xy(1, 3, CellConstraints.DEFAULT, CellConstraints.CENTER));
+        mMainPanel.add(panel1, cc.xy(3, 1, CellConstraints.DEFAULT, CellConstraints.CENTER));
         mTextTimer1.setEditable(false);
-        panel1.add(mTextTimer1, cc.xy(5, 1, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(mTextTimer1, cc.xy(3, 1, CellConstraints.FILL, CellConstraints.DEFAULT));
         mTextTimer2.setEditable(false);
-        panel1.add(mTextTimer2, cc.xy(5, 3, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(mTextTimer2, cc.xy(3, 3, CellConstraints.FILL, CellConstraints.DEFAULT));
         mTextTimer3.setEditable(false);
-        panel1.add(mTextTimer3, cc.xy(5, 5, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(mTextTimer3, cc.xy(3, 5, CellConstraints.FILL, CellConstraints.DEFAULT));
         mTextTimer4.setEditable(false);
-        panel1.add(mTextTimer4, cc.xy(5, 7, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(mTextTimer4, cc.xy(3, 7, CellConstraints.FILL, CellConstraints.DEFAULT));
         mTextTimer5.setEditable(false);
-        panel1.add(mTextTimer5, cc.xy(5, 9, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(mTextTimer5, cc.xy(3, 9, CellConstraints.FILL, CellConstraints.DEFAULT));
         mTextTimer6.setEditable(false);
-        panel1.add(mTextTimer6, cc.xy(5, 11, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(mTextTimer6, cc.xy(3, 11, CellConstraints.FILL, CellConstraints.DEFAULT));
         mTextTimer7.setEditable(false);
-        panel1.add(mTextTimer7, cc.xy(5, 13, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(mTextTimer7, cc.xy(3, 13, CellConstraints.FILL, CellConstraints.DEFAULT));
         mTextTimer8.setEditable(false);
-        panel1.add(mTextTimer8, cc.xy(5, 15, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(mTextTimer8, cc.xy(3, 15, CellConstraints.FILL, CellConstraints.DEFAULT));
         mTextTimer9.setEditable(false);
-        panel1.add(mTextTimer9, cc.xy(5, 17, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(mTextTimer9, cc.xy(3, 17, CellConstraints.FILL, CellConstraints.DEFAULT));
         mTextTimer10.setEditable(false);
-        panel1.add(mTextTimer10, cc.xy(5, 19, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(mTextTimer10, cc.xy(3, 19, CellConstraints.FILL, CellConstraints.DEFAULT));
         mStatusTimer1.setHorizontalAlignment(0);
         mStatusTimer1.setText("Swimming");
         panel1.add(mStatusTimer1, cc.xy(7, 1, CellConstraints.FILL, CellConstraints.FILL));
@@ -484,46 +666,66 @@ public class Application implements ActionListener, KeyEventDispatcher
         final JLabel label1 = new JLabel();
         label1.setHorizontalAlignment(0);
         label1.setText("1");
-        panel1.add(label1, cc.xy(3, 1, CellConstraints.DEFAULT, CellConstraints.FILL));
+        panel1.add(label1, cc.xy(1, 1, CellConstraints.DEFAULT, CellConstraints.FILL));
         final JLabel label2 = new JLabel();
         label2.setHorizontalAlignment(0);
         label2.setText("2");
-        panel1.add(label2, cc.xy(3, 3, CellConstraints.DEFAULT, CellConstraints.FILL));
+        panel1.add(label2, cc.xy(1, 3, CellConstraints.DEFAULT, CellConstraints.FILL));
         final JLabel label3 = new JLabel();
         label3.setHorizontalAlignment(0);
         label3.setText("3");
-        panel1.add(label3, cc.xy(3, 5, CellConstraints.DEFAULT, CellConstraints.FILL));
+        panel1.add(label3, cc.xy(1, 5, CellConstraints.DEFAULT, CellConstraints.FILL));
         final JLabel label4 = new JLabel();
         label4.setHorizontalAlignment(0);
         label4.setText("4");
-        panel1.add(label4, cc.xy(3, 7, CellConstraints.DEFAULT, CellConstraints.FILL));
+        panel1.add(label4, cc.xy(1, 7, CellConstraints.DEFAULT, CellConstraints.FILL));
         final JLabel label5 = new JLabel();
         label5.setHorizontalAlignment(0);
         label5.setText("5");
-        panel1.add(label5, cc.xy(3, 9, CellConstraints.DEFAULT, CellConstraints.FILL));
+        panel1.add(label5, cc.xy(1, 9, CellConstraints.DEFAULT, CellConstraints.FILL));
         final JLabel label6 = new JLabel();
         label6.setHorizontalAlignment(0);
         label6.setText("6");
-        panel1.add(label6, cc.xy(3, 11, CellConstraints.DEFAULT, CellConstraints.FILL));
+        panel1.add(label6, cc.xy(1, 11, CellConstraints.DEFAULT, CellConstraints.FILL));
         final JLabel label7 = new JLabel();
         label7.setHorizontalAlignment(0);
         label7.setText("7");
-        panel1.add(label7, cc.xy(3, 13, CellConstraints.DEFAULT, CellConstraints.FILL));
+        panel1.add(label7, cc.xy(1, 13, CellConstraints.DEFAULT, CellConstraints.FILL));
         final JLabel label8 = new JLabel();
         label8.setHorizontalAlignment(0);
         label8.setText("8");
-        panel1.add(label8, cc.xy(3, 15, CellConstraints.DEFAULT, CellConstraints.FILL));
+        panel1.add(label8, cc.xy(1, 15, CellConstraints.DEFAULT, CellConstraints.FILL));
         final JLabel label9 = new JLabel();
         label9.setHorizontalAlignment(0);
         label9.setText("9");
-        panel1.add(label9, cc.xy(3, 17, CellConstraints.DEFAULT, CellConstraints.FILL));
+        panel1.add(label9, cc.xy(1, 17, CellConstraints.DEFAULT, CellConstraints.FILL));
         final JLabel label10 = new JLabel();
         label10.setHorizontalAlignment(0);
         label10.setText("10");
-        panel1.add(label10, cc.xy(3, 19, CellConstraints.DEFAULT, CellConstraints.FILL));
+        panel1.add(label10, cc.xy(1, 19, CellConstraints.DEFAULT, CellConstraints.FILL));
+        mTextTimerMills1.setEditable(false);
+        panel1.add(mTextTimerMills1, cc.xy(5, 1, CellConstraints.FILL, CellConstraints.DEFAULT));
+        mTextTimerMills2.setEditable(false);
+        panel1.add(mTextTimerMills2, cc.xy(5, 3, CellConstraints.FILL, CellConstraints.DEFAULT));
+        mTextTimerMills3.setEditable(false);
+        panel1.add(mTextTimerMills3, cc.xy(5, 5, CellConstraints.FILL, CellConstraints.DEFAULT));
+        mTextTimerMills4.setEditable(false);
+        panel1.add(mTextTimerMills4, cc.xy(5, 7, CellConstraints.FILL, CellConstraints.DEFAULT));
+        mTextTimerMills5.setEditable(false);
+        panel1.add(mTextTimerMills5, cc.xy(5, 9, CellConstraints.FILL, CellConstraints.DEFAULT));
+        mTextTimerMills6.setEditable(false);
+        panel1.add(mTextTimerMills6, cc.xy(5, 11, CellConstraints.FILL, CellConstraints.DEFAULT));
+        mTextTimerMills7.setEditable(false);
+        panel1.add(mTextTimerMills7, cc.xy(5, 13, CellConstraints.FILL, CellConstraints.DEFAULT));
+        mTextTimerMills8.setEditable(false);
+        panel1.add(mTextTimerMills8, cc.xy(5, 15, CellConstraints.FILL, CellConstraints.DEFAULT));
+        mTextTimerMills9.setEditable(false);
+        panel1.add(mTextTimerMills9, cc.xy(5, 17, CellConstraints.FILL, CellConstraints.DEFAULT));
+        mTextTimerMills10.setEditable(false);
+        panel1.add(mTextTimerMills10, cc.xy(5, 19, CellConstraints.FILL, CellConstraints.DEFAULT));
         final JPanel panel2 = new JPanel();
         panel2.setLayout(new FormLayout("fill:d:grow", "center:max(d;4px):noGrow,top:3dlu:noGrow,top:max(d;20dlu):grow,top:3dlu:noGrow,center:d:grow(0.06)"));
-        mMainPanel.add(panel2, cc.xy(3, 3, CellConstraints.DEFAULT, CellConstraints.FILL));
+        mMainPanel.add(panel2, cc.xywh(5, 1, 1, 3, CellConstraints.DEFAULT, CellConstraints.FILL));
         mStartStopButton = new JButton();
         mStartStopButton.setEnabled(true);
         mStartStopButton.setText("Start/Stop");
@@ -536,13 +738,14 @@ public class Application implements ActionListener, KeyEventDispatcher
         label11.setText("Controls");
         panel2.add(label11, cc.xy(1, 1, CellConstraints.CENTER, CellConstraints.DEFAULT));
         final JPanel panel3 = new JPanel();
-        panel3.setLayout(new FormLayout("fill:d:grow", "center:d:grow"));
-        panel3.setEnabled(false);
-        mMainPanel.add(panel3, cc.xyw(1, 1, 3, CellConstraints.DEFAULT, CellConstraints.FILL));
-        final JLabel label12 = new JLabel();
-        label12.setFont(new Font(label12.getFont().getName(), Font.BOLD, 24));
-        label12.setText("Swimming Gala Timer");
-        panel3.add(label12, cc.xy(1, 1, CellConstraints.CENTER, CellConstraints.DEFAULT));
+        panel3.setLayout(new FormLayout("fill:d:grow(0.7999999999999999),left:4dlu:noGrow,fill:max(d;4px):grow(0.19999999999999998)", "center:d:grow"));
+        mMainPanel.add(panel3, cc.xy(3, 3, CellConstraints.FILL, CellConstraints.FILL));
+        mExportCurrentResultsButton = new JButton();
+        mExportCurrentResultsButton.setText("Export Current Results");
+        panel3.add(mExportCurrentResultsButton, cc.xy(1, 1, CellConstraints.FILL, CellConstraints.FILL));
+        mChooseButton = new JButton();
+        mChooseButton.setText("Choose");
+        panel3.add(mChooseButton, cc.xy(3, 1, CellConstraints.DEFAULT, CellConstraints.FILL));
         label1.setLabelFor(mTextTimer1);
         label2.setLabelFor(mTextTimer2);
         label3.setLabelFor(mTextTimer3);
